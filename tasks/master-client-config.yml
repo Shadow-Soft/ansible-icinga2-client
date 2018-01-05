@@ -1,0 +1,11 @@
+---
+- name: "Generate host config for {{ hostvars[item][fqdn_attr] }} client"
+  template: 
+    dest: /etc/icinga2/hosts.d/{{ hostvars[item][fqdn_attr] }}.conf
+    src: files/host_template.j2  
+- name: "Generate token for {{ hostvars[item][fqdn_attr] }} client"
+  command: icinga2 pki ticket --cn {{ hostvars[item][fqdn_attr] }}
+  register: temp
+- name: "Make the token accessible to clients as var ip_{{ item.replace('.','_') }}"
+  set_fact:
+    "ip_{{ item.replace('.','_') }}": "{{ temp.stdout }}"

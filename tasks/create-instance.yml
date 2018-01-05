@@ -1,0 +1,20 @@
+---
+- name: Launch instance
+  ec2:
+     key_name: "{{ keypair }}"
+     group_id: "{{ item.securitygroup }}"
+     instance_type: "{{ item.instance_type }}"
+     image: "{{ item.image_id }}"
+     region: "{{ ec2_region }}"
+     vpc_subnet_id: "{{ item.vpc_subnet }}"
+     instance_tags:
+        Name: "{{ item.name }}"
+        Group: "{{ item.group }}"
+        Username: "{{ item.user }}"
+     assign_public_ip: yes
+     volumes:
+      - device_name: /dev/sda1
+        volume_type: gp2
+        volume_size: 10
+        delete_on_termination: true
+  with_items: "{{ instances }}"

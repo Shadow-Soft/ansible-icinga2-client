@@ -1,0 +1,13 @@
+---
+- name: Get Instance Info
+  ec2_remote_facts:
+     region: "{{ ec2_region }}"
+     filters:
+      "tag:Group" : "{{ ec2_group }}"
+  register: ec2_info
+- name: Delete Instance
+  ec2:
+     region: "{{ ec2_region }}"
+     state: "absent"
+     instance_ids: "{{ item.id }}"
+  with_items: "{{ ec2_info.instances }}"    

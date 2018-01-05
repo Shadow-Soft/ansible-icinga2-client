@@ -1,0 +1,95 @@
+---
+- name: Detect the Current Icinga Version On Master
+  hosts: icinga_master
+  become: yes
+  gather_facts: no
+  vars:
+    fqdn_attr: "fqdn"
+  tasks:
+    - include_tasks: tasks/master-client-config.yml
+      with_items: "{{ groups.new_icinga_clients }}" 
+    - set_fact:
+        folder: /etc/icinga2/pki
+    - name: "Check icinga2 version"
+      shell: yum list installed icinga2 | tail -n1 | awk {'print $2'} | awk -F ".el7." {' print $1'}
+      register: icinga_ver
+    - set_fact:
+        folder: /var/lib/icinga2/certs
+      when: icinga_ver.stdout | version_compare('2.8', '>=')
+    - name: "Check nagios plugins version"
+      shell: yum list installed nagios-plugins-all | tail -n1 | awk {'print $2'} | awk -F ".el7" {' print $1'}
+      register: plugin_ver
+    - name: "Copy the master cert to a variable"
+      command: "cat {{ folder }}/{{ fqdn }}.crt"
+      register: master_crt
+    - name: "Register the icinga port to a variable"
+      raw: netstat -nlp | grep icinga | awk -F "0.0.0.0:" '{ print $2 }' | tr -d ' ' | tr -d '\r\n'
+      register: port
+- name: Configure Icinga 2 Client Machine
+  hosts: new_icinga_clients
+  strategy: free
+  become: yes
+  tasks:
+    - name: Fail if Amazon Linux.
+      fail:
+        msg: "Amazon linux is not currently support."
+      when: ansible_distribution == "Amazon"
+    - set_fact:
+        cert_folder: "{{ hostvars[groups['icinga_master'][0]]['folder'] }}"
+        master_fqdn: "{{ hostvars[groups['icinga_master'][0]]['fqdn'] }}"
+        master_port: "{{ hostvars[groups['icinga_master'][0]]['port'].stdout }}"
+        ticket_attrib: "ip_{{ inventory_hostname.replace('.','_') }}"
+        master_cert_content: "{{ hostvars[groups['icinga_master'][0]]['master_crt'].stdout }}"
+    - set_fact:
+        ticket: "{{ hostvars[groups['icinga_master'][0]][ticket_attrib] }}"
+    - name: "Ubuntu/Debian client preperation"
+      include_tasks: tasks/install-ubuntu-client.yml
+      when: ansible_os_family == "Debian"
+    - name: "RHEL/Centos client preperation"
+      include_tasks: tasks/install-rhel-client.yml
+      when: ansible_os_family == "RedHat"
+    - name: Getting file permissions
+      stat:
+        path: "{{ cert_folder | regex_replace('[^/]*$','') }}"
+      register: perm
+    - name: Creates cert directory
+      file: 
+        path: "{{ cert_folder }}"
+        state: directory
+        owner: "{{ perm.stat.pw_name }}"
+        group: "{{ perm.stat.gr_name }}"
+        mode: 0700
+    - name: "Installing master certificate"
+      copy: 
+        content: "{{ master_cert_content }}" 
+        dest: "{{ cert_folder }}/{{ master_fqdn }}.crt"
+        force: yes
+    - name: Setting master cert permissions
+      file: 
+        path: "{{ cert_folder }}/{{ master_fqdn }}.crt"
+        owner: "{{ perm.stat.pw_name }}"
+        group: "{{ perm.stat.gr_name }}"
+        mode: 0644
+    - name: Setting icinga node setup parameters
+      shell: >
+          icinga2 node setup
+          --zone {{ fqdn }}
+          --master_host {{ master_fqdn }},{{ master_port }}
+          --endpoint {{ master_fqdn }},{{ master_fqdn }},{{ master_port }}
+          --ticket {{ ticket }}
+          --trustedcert {{ cert_folder }}/{{ master_fqdn }}.crt
+          --cn {{ fqdn }}
+          --accept-command
+    - name: Restarting icinga2 daemon
+      service:
+        name: icinga2
+        state: restarted
+- name: Detect the Current Icinga Version On Master
+  hosts: icinga_master
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Reload icinga daemon
+      service:
+        name: icinga2
+        state: reloaded

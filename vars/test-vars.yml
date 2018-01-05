@@ -1,0 +1,18 @@
+---
+keypair: AnsibleKeyPair
+subnet: "subnet-27f1367c"
+securitygroup: "sg-35841248"
+master_ami: "{{ lookup('env','ICINGA_MASTER_AMI') }}"
+#ex. ami-9c492ee6
+master_name: "icinga2-test-master"
+ec2_region: "us-east-1"
+ec2_group:  "{{ lookup('env','ICINGA_TEST_GROUP') }}"
+client_centos: "{{ ec2_group }}_centos"
+client_ubuntu: "{{ ec2_group }}_ubuntu"
+
+instances:
+  - { name: "{{ master_name }}", user: "ec2-user", group: "{{ ec2_group }}", securitygroup: "{{ securitygroup }}", instance_type: "m4.large", image_id: "{{ master_ami }}", vpc_subnet: "subnet-27f1367c" }
+  - { name: "icinga2-test-ubuntu16", user: "ubuntu", group: "{{ client_ubuntu }}", securitygroup: "{{ securitygroup }}", instance_type: "t2.micro", image_id: "ami-aa2ea6d0", vpc_subnet: "subnet-27f1367c" }
+  - { name: "icinga2-test-ubuntu14", user: "ubuntu", group: "{{ client_ubuntu }}", securitygroup: "{{ securitygroup }}", instance_type: "t2.micro", image_id: "ami-c29e1cb8", vpc_subnet: "subnet-27f1367c" }
+  - { name: "icinga2-test-centos6", user: "centos", group: "{{ client_centos }}", securitygroup: "{{ securitygroup }}", instance_type: "t2.micro", image_id: "ami-02e98f78", vpc_subnet: "subnet-27f1367c" }
+  - { name: "icinga2-test-centos7", user: "centos", group: "{{ client_centos }}", securitygroup: "{{ securitygroup }}", instance_type: "t2.micro", image_id: "ami-04ccfc13", vpc_subnet: "subnet-27f1367c" }

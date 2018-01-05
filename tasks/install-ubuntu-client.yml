@@ -1,0 +1,27 @@
+---
+- set_fact:
+    os_ver: trusty
+  when: ansible_distribution_version == '14.04'
+- set_fact:
+    os_ver: xenial
+  when: ansible_distribution_version == '16.04'
+- name: Get icinga repo key
+  shell: wget -O - https://packages.icinga.com/icinga.key | apt-key add - 
+- name: Install icinga repo
+  shell: echo 'deb https://packages.icinga.com/ubuntu icinga-{{ os_ver }} main' >/etc/apt/sources.list.d/icinga.list
+- name: Update repo cache
+  apt:
+    update_cache: yes
+- name: Installing icinga2
+  apt_install_ver: 
+    package: icinga2
+    version: "{{ hostvars[groups['icinga_master'][0]]['icinga_ver'].stdout }}.{{ os_ver }}"
+- name: Install pip
+  apt:
+    name: python-pip
+    state: latest
+- name: "Upgrading pip"
+  command: "pip install --upgrade pip"
+- name: "Install pexpect"
+  pip:
+    name: pexpect

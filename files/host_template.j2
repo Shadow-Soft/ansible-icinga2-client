@@ -1,0 +1,15 @@
+/* Linux Client Example */
+
+object Zone "{{ hostvars[item][fqdn_attr] }}" {
+  endpoints = [ "{{ hostvars[item][fqdn_attr] }}" ]
+  parent = ZoneName
+}
+
+object Endpoint "{{ hostvars[item][fqdn_attr] }}" {
+  host = "{{ hostvars[item][fqdn_attr] }}"
+}
+
+object Host "{{ hostvars[item][fqdn_attr] }}" {
+  import "generic-linux-host"
+  address = "{{ hostvars[item][fqdn_attr] }}"
+}
