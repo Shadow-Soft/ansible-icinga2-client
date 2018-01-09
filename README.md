@@ -30,8 +30,8 @@ aws-launch-test-environment.py - Python script which launches test instances usi
 1. To properly leverage this playbook, modifications must be made to tasks/test-vars.yml
 2. For our example, we leverage environment variables to fill in many of the requires variables as these will be populated by Jenkins.
 
-
-
-
-
-
+aws-master-hostname-recon.yml - Playbook which will regenerate the public masters certificate based on the AWS Public DNS entry.  Use this only with an elastic ip in AWS otherwise the dns/ip will change on each instance reboot.  Also, the clients will need elastic ips as well for the exact same reason.  A smarter route would be to leverage your own registered domain name in route53 so when the box reboots the domain name always points to the same machine in AWS.
+1. Change variables in the aws-config playbook to match the ec2 public dns entries:
+    fqdn: "{{ ec2_public_dns_name  }}"
+    fqdn_attr: "{{ ec2_public_dns_name }}"
+  Note: There is a reference to these variables in the first two plays.
