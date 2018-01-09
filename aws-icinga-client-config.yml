@@ -1,18 +1,27 @@
 ---
-- name: Detect the Current Icinga Version On Master
-  hosts: icinga_master
+- name: Configure Icinga Master for Each New Client
+  hosts: "tag_Group_{{ lookup('env','ICINGA_TEST_GROUP') }}"
+  user: "{{ ec2_tag_Username }}"
   become: yes
   gather_facts: no
   vars:
-    fqdn_attr: "fqdn"
-  tasks:
-    - include: tasks/master-client-config.yml
-      with_items: "{{ groups.new_icinga_clients }}" 
+    fqdn_attr: "ec2_private_dns_name"
+  tasks:     
     - set_fact:
-        folder: /etc/icinga2/pki
+        ansible_local_user: "{{ ec2_tag_Username }}"
+        centos_group: "tag_Group_{{ lookup('env','ICINGA_TEST_GROUP') }}_centos"
+        ubuntu_group: "tag_Group_{{ lookup('env','ICINGA_TEST_GROUP') }}_ubuntu"
+    - debug: var=groups[centos_group]
+    - name: Configuring the master for each client.
+      include: tasks/master-client-config.yml
+      with_items: 
+        - "{{ groups[centos_group] }}"
+        - "{{ groups[ubuntu_group] }}"
     - name: "Check icinga2 version"
       shell: yum list installed icinga2 | tail -n1 | awk {'print $2'} | awk -F ".el7." {' print $1'}
       register: icinga_ver
+    - set_fact:
+        folder: /etc/icinga2/pki
     - set_fact:
         folder: /var/lib/icinga2/certs
       when: icinga_ver.stdout | version_compare('2.8', '>=')
@@ -20,22 +29,25 @@
       shell: yum list installed nagios-plugins-all | tail -n1 | awk {'print $2'} | awk -F ".el7" {' print $1'}
       register: plugin_ver
     - name: "Copy the master cert to a variable"
-      command: "cat {{ folder }}/{{ fqdn }}.crt"
+      command: "cat {{ folder }}/{{ ec2_private_dns_name }}.crt"
       register: master_crt
     - name: "Register the icinga port to a variable"
       raw: netstat -nlp | grep icinga | awk -F "0.0.0.0:" '{ print $2 }' | tr -d ' ' | tr -d '\r\n'
       register: port
 - name: Configure Icinga 2 Client Machine
-  hosts: new_icinga_clients
-  strategy: free
+  hosts: "tag_Group_{{ lookup('env','ICINGA_TEST_GROUP') }}_*"
+  user: "{{ ec2_tag_Username }}"
   become: yes
+  vars:
+    fqdn: "{{ ec2_private_dns_name }}"
   pre_tasks:
     - include_vars: vars/test-vars.yml
     - set_fact:
-        master_group: "icinga_master"
+        master_group: "tag_Group_{{ lookup('env','ICINGA_TEST_GROUP') }}"
+    - debug: var=groups[master_group]
     - set_fact:
         cert_folder: "{{ hostvars[groups[master_group][0]]['folder'] }}"
-        master_fqdn: "{{ hostvars[groups[master_group][0]]['fqdn'] }}"
+        master_fqdn: "{{ hostvars[groups[master_group][0]]['ec2_private_dns_name'] }}"
         master_port: "{{ hostvars[groups[master_group][0]]['port'].stdout }}"
         master_cert_content: "{{ hostvars[groups[master_group][0]]['master_crt'].stdout }}"
         ticket_attrib: "ip_{{ inventory_hostname.replace('.','_') }}"
@@ -50,11 +62,14 @@
       when: cert.stat.exists == true
   roles:
     - { role: icinga-client-config, when: "cert.stat.exists == false" }
-- name: Detect the Current Icinga Version On Master
-  hosts: icinga_master
+- name: Reload Icinga On Master
+  hosts: "tag_Group_{{ lookup('env','ICINGA_TEST_GROUP') }}"
+  user: "{{ ec2_tag_Username }}"
   become: yes
   gather_facts: no
   tasks:
+    - set_fact:
+        ansible_local_user: "{{ ec2_tag_Username }}"
     - name: Reload icinga daemon
       service:
         name: icinga2

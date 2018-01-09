@@ -1,0 +1,9 @@
+---
+- name: Destroy Icinga 2 Test Machines
+  hosts: localhost
+  gather_facts: false
+  tasks:
+   - include_vars: vars/test-vars.yml
+   - set_fact:
+       ec2_group: "{{ ec2_group }}*"   
+   - include: tasks/destroy-instances.yml

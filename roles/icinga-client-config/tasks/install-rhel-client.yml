@@ -1,0 +1,69 @@
+---
+- name: "RHEL/Centos - Install EPEL Repo release repo for Centos 6/7"
+  yum:
+    name: epel-release
+    state: latest
+  when: ansible_distribution == 'CentOS' or ansible_distribution == 'Amazon'
+- name: "RHEL/Centos - Fixing EPEL Repo for Centos 6"
+  replace:
+    path: /etc/yum.repos.d/epel.repo
+    regexp: 'https'
+    replace: 'http'
+  when: ansible_distribution == 'CentOS' and ansible_distribution_version >= 6 and ansible_distribution_version < 7
+- name: "RHEL/Centos - Install EPEL Repo release repo for RHEL 6"
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+    state: latest
+  when: ansible_distribution == 'Red Hat Enterprise Linux' and ansible_distribution_version >= 6 and ansible_distribution_version < 7
+- name: "RHEL/Centos - Install EPEL Repo release repo for RHEL 7"
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: latest
+  when: ansible_distribution == 'Red Hat Enterprise Linux' and ansible_distribution_version >= 7
+- name: "RHEL/Centos - Install Icinga repo key"
+  command: rpm --import https://packages.icinga.com/icinga.key
+- name: "RHEL/Centos - Get icinga repo for RHEL/Centos 7 if on RHEL 7"
+  yum:
+    name: https://packages.icinga.com/epel/icinga-rpm-release-7-latest.noarch.rpm
+    state: present
+  when: ansible_distribution_version >= 7
+- name: "RHEL/Centos - Get icinga repo for RHEL/Centos 6 if on RHEL 6"
+  yum:
+    name: https://packages.icinga.com/epel/icinga-rpm-release-6-latest.noarch.rpm
+    state: present
+  when: ansible_distribution_version >= 6 and ansible_distribution_version < 7
+- name: "RHEL/Centos - Fixing Icinga Release Repo for Amazon Linux"
+  replace:
+    path: /etc/yum.repos.d/ICINGA-release.repo
+    regexp: '\$releasever'
+    replace: '6'
+  when: ansible_distribution == 'Amazon'
+- name: "RHEL/Centos - Fixing Icinga Snapshot Repo for Amazon Linux"
+  replace:
+    path: /etc/yum.repos.d/ICINGA-snapshot.repo
+    regexp: '\$releasever'
+    replace: '6'
+  when: ansible_distribution == 'Amazon'
+- name: "RHEL/Centos - Finding the exact icinga2 pkg name"
+  shell: "yum list icinga2 --showduplicates | grep {{ hostvars[groups[master_group][0]]['icinga_ver'].stdout }} | awk {' print $2 '}"
+  register: icinga_ver
+- name: "RHEL/Centos - Install icinga"
+  yum:
+    name: "icinga2-{{ icinga_ver.stdout_lines[0] }}"
+    state: present
+- name: "RHEL/Centos - Finding the exact nagios-plugins-all pkg name"
+  shell: "yum list nagios-plugins-all --showduplicates | grep {{ hostvars[groups[master_group][0]]['plugin_ver'].stdout }} | awk {' print $2 '}"
+  register: nagios_ver
+- name: "RHEL/Centos - Install nagios-plugins-all"
+  yum:
+    name: "nagios-plugins-all-{{ nagios_ver.stdout_lines[0] }}"
+    state: present
+- name: "RHEL/Centos - Install pip"
+  yum:
+    name: "python-pip"
+    state: latest
+- name: "RHEL/Centos - Upgrading pip"
+  command: "pip install --upgrade pip"
+- name: "RHEL/Centos - Install pexpect"
+  pip:
+    name: pexpect

@@ -1,0 +1,47 @@
+---
+- name: Fail if Amazon Linux.
+  fail:
+    msg: "Amazon linux is not currently support."
+  when: ansible_distribution == "Amazon"
+- name: "Ubuntu/Debian client preperation"
+  include: install-ubuntu-client.yml
+  when: ansible_os_family == "Debian"
+- name: "RHEL/Centos client preperation"
+  include: install-rhel-client.yml
+  when: ansible_os_family == "RedHat"
+- name: Getting file permissions
+  stat:
+    path: "{{ cert_folder | regex_replace('[^/]*$','') }}"
+  register: perm
+- name: Creates cert directory
+  file: 
+    path: "{{ cert_folder }}"
+    state: directory
+    owner: "{{ perm.stat.pw_name }}"
+    group: "{{ perm.stat.gr_name }}"
+    mode: 0700
+- name: "Installing master certificate"
+  copy: 
+    content: "{{ master_cert_content }}" 
+    dest: "{{ cert_folder }}/{{ master_fqdn }}.crt"
+    force: yes
+- name: Setting master cert permissions
+  file: 
+    path: "{{ cert_folder }}/{{ master_fqdn }}.crt"
+    owner: "{{ perm.stat.pw_name }}"
+    group: "{{ perm.stat.gr_name }}"
+    mode: 0644
+- name: Setting icinga node setup parameters
+  shell: >
+      icinga2 node setup
+      --zone {{ fqdn }}
+      --master_host {{ master_fqdn }},{{ master_port }}
+      --endpoint {{ master_fqdn }},{{ master_fqdn }},{{ master_port }}
+      --ticket {{ ticket }}
+      --trustedcert {{ cert_folder }}/{{ master_fqdn }}.crt
+      --cn {{ fqdn }}
+      --accept-command
+- name: Restarting icinga2 daemon
+  service:
+    name: icinga2
+    state: restarted
