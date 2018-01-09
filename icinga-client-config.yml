@@ -1,5 +1,5 @@
 ---
-- name: Detect the Current Icinga Version On Master
+- name: Configure Icinga Master for Each New Client
   hosts: icinga_master
   become: yes
   gather_facts: no
@@ -50,7 +50,7 @@
       when: cert.stat.exists == true
   roles:
     - { role: icinga-client-config, when: "cert.stat.exists == false" }
-- name: Detect the Current Icinga Version On Master
+- name: Reload Icinga On Master
   hosts: icinga_master
   become: yes
   gather_facts: no
