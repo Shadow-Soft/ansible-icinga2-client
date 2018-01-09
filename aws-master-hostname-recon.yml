@@ -1,0 +1,52 @@
+---
+- name: Reconfigure Master Cert
+  hosts: "tag_Group_{{ lookup('env','ICINGA_TEST_GROUP') }}"
+  user: "{{ ec2_tag_Username }}"
+  become: yes
+  gather_facts: no
+  vars:
+     public_conn: true
+  tasks:
+    - set_fact:
+        ansible_local_user: "{{ ec2_tag_Username }}"
+    - set_fact:
+        fqdn: "{{ ec2_private_dns_name }}"
+        fqdn_attr: "ec2_private_dns_name"
+    - set_fact:
+        fqdn: "{{ ec2_public_dns_name }}"
+        fqdn_attr: "ec2_public_dns_name"
+      when: public_conn is defined and public_conn == true
+    - name: "Changing hostname permanently"
+      lineinfile:
+        dest: /etc/sysconfig/network
+        line: "HOSTNAME={{ fqdn }}"
+        state: present
+    - name: "Changing the hostname for now"
+      hostname:
+        name: "{{ fqdn }}"
+    - name: "Updating /etc/hosts"
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '^127\.0\.0\.1[ \t]+localhost'
+        line: "127.0.0.1 localhost localhost.localdomain localhost4 localhost4.localdomain4 {{ inventory_hostname }}"
+        state: present
+    - name: "Updating /etc/hosts"
+      lineinfile:
+        dest: /etc/icinga2/constants.conf
+        regexp: '^const ZoneName'
+        line: "const ZoneName = \"{{ fqdn }}\""
+        state: present
+    - name: "Updating /etc/hosts"
+      lineinfile:
+        dest: /etc/icinga2/constants.conf
+        regexp: '^const NodeName'
+        line: "const NodeName = \"{{ fqdn }}\""
+        state: present
+    - name: "Regenerating the csr"
+      command: "sudo icinga2 pki new-cert --cn {{ fqdn }} --key /etc/icinga2/pki/{{ fqdn }}.key --csr /etc/icinga2/pki/{{ fqdn  }}.csr"
+    - name: "Resigning the csr"
+      command: "sudo icinga2 pki sign-csr --csr /etc/icinga2/pki/{{ fqdn }}.csr --cert /etc/icinga2/pki/{{ fqdn }}.crt"
+    - name: Reload icinga daemon
+      service:
+        name: icinga2
+        state: restarted
