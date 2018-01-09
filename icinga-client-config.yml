@@ -33,9 +33,10 @@
     - include_vars: vars/test-vars.yml
     - set_fact:
         master_group: "icinga_master"
+        fqdn_attr: "fqdn"
     - set_fact:
         cert_folder: "{{ hostvars[groups[master_group][0]]['folder'] }}"
-        master_fqdn: "{{ hostvars[groups[master_group][0]]['fqdn'] }}"
+        master_fqdn: "{{ hostvars[groups[master_group][0]][fqdn_attr] }}"
         master_port: "{{ hostvars[groups[master_group][0]]['port'].stdout }}"
         master_cert_content: "{{ hostvars[groups[master_group][0]]['master_crt'].stdout }}"
         ticket_attrib: "ip_{{ inventory_hostname.replace('.','_') }}"
