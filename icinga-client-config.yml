@@ -26,7 +26,7 @@
       raw: netstat -nlp | grep icinga | awk -F "0.0.0.0:" '{ print $2 }' | tr -d ' ' | tr -d '\r\n'
       register: port
 - name: Configure Icinga 2 Client Machine
-  hosts: new_icinga_clients
+  hosts: "{{ lookup('env','ICINGA_GROUP')] }}"
   strategy: free
   become: yes
   pre_tasks:
