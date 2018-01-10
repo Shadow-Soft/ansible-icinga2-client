@@ -21,6 +21,7 @@
     group: "{{ perm.stat.gr_name }} "
     mode: 0700
   when: "perm.stat.pw_name is defined and perm.stat.gr_name is defined"
+  become: true
 
 - name: Creates cert directory - {{ cert_folder }} - Using Environment Variables
   file: 
