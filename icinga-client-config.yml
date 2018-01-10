@@ -7,7 +7,7 @@
     fqdn_attr: "fqdn"
   tasks:
     - include: tasks/master-client-config.yml
-      with_items: "{{ groups.new_icinga_clients }}" 
+      with_items: "{{ groups[lookup('env','ICINGA_GROUP')] }}" 
     - set_fact:
         folder: /etc/icinga2/pki
     - name: "Check icinga2 version"
