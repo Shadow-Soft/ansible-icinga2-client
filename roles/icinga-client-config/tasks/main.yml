@@ -9,16 +9,16 @@
 - name: "RHEL/Centos client preperation"
   include: install-rhel-client.yml
   when: ansible_os_family == "RedHat"
-- name: Getting file permissions
+- name: Getting file permissions - {{ cert_folder }}
   stat:
     path: "{{ cert_folder | regex_replace('[^/]*$','') }}"
   register: perm
-- name: Creates cert directory
+- name: Creates cert directory - {{ cert_folder }}
   file: 
     path: "{{ cert_folder }}"
     state: directory
-    owner: "{{ perm.stat.pw_name }}"
-    group: "{{ perm.stat.gr_name }}"
+    owner: "{{ perm.stat.pw_name if perm.stat is defined else lookup('env','ICINGA_USER') }}"
+    group: "{{ perm.stat.gr_name if perm.stat is defined else lookup('env','ICINGA_GROUP') }}"
     mode: 0700
 - name: "Installing master certificate"
   copy: 
@@ -28,8 +28,8 @@
 - name: Setting master cert permissions
   file: 
     path: "{{ cert_folder }}/{{ master_fqdn }}.crt"
-    owner: "{{ perm.stat.pw_name }}"
-    group: "{{ perm.stat.gr_name }}"
+    owner: "{{ perm.stat.pw_name if perm.stat is defined else lookup('env','ICINGA_USER') }}"
+    group: "{{ perm.stat.gr_name if perm.stat is defined else lookup('env','ICINGA_GROUP') }}"
     mode: 0644
 - name: Setting icinga node setup parameters
   shell: >
