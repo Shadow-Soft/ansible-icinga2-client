@@ -17,8 +17,8 @@
   file: 
     path: "{{ cert_folder }}"
     state: directory
-    owner: "{{ perm.stat.pw_name }} "
-    group: "{{ perm.stat.gr_name }} "
+    owner: "{{ perm.stat.pw_name }}"
+    group: "{{ perm.stat.gr_name }}"
     mode: 0700
   when: "perm.stat.pw_name is defined and perm.stat.gr_name is defined"
   become: true
@@ -27,8 +27,8 @@
   file: 
     path: "{{ cert_folder }}"
     state: directory
-    owner: "{{ lookup('env','ICINGA_USER')  }} "
-    group: "{{ lookup('env','ICINGA_GROUP') }} "
+    owner: "{{ lookup('env','ICINGA_USER')  }}"
+    group: "{{ lookup('env','ICINGA_GROUP') }}"
     mode: 0700
   when: "not perm.stat.pw_name is defined or not perm.stat.gr_name is defined"
   become: true
@@ -50,8 +50,8 @@
 - name: Setting master cert permissions - Using Environment Variables
   file: 
     path: "{{ cert_folder }}/{{ master_fqdn }}.crt"
-    owner: "{{ lookup('env','ICINGA_USER')  }} "
-    group: "{{ lookup('env','ICINGA_GROUP') }} "
+    owner: "{{ lookup('env','ICINGA_USER')  }}"
+    group: "{{ lookup('env','ICINGA_GROUP') }}"
     mode: 0644
   become: true
   when: "not perm.stat.pw_name is defined or not perm.stat.gr_name is defined"
