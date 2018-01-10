@@ -39,7 +39,7 @@
         master_fqdn: "{{ hostvars[groups[master_group][0]][fqdn_attr] }}"
         master_port: "{{ hostvars[groups[master_group][0]]['port'].stdout }}"
         master_cert_content: "{{ hostvars[groups[master_group][0]]['master_crt'].stdout }}"
-        ticket_attrib: "ip_{{ inventory_hostname.replace('.','_') }}"
+        ticket_attrib: "ip_{{ inventory_hostname.replace('.','_').replace('-','_') }}"
     - set_fact:
         ticket: "{{ hostvars[groups[master_group][0]][ticket_attrib] }}"
     - name: "Checking if previously run"
