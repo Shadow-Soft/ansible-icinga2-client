@@ -7,7 +7,7 @@
     fqdn_attr: "fqdn"
   tasks:
     - include: tasks/master-client-config.yml
-      with_items: "{{ groups[lookup('env','ICINGA_GROUP')] }}" 
+      with_items: "{{ groups[lookup('env','ICINGA_HOSTS')] }}" 
     - set_fact:
         folder: /etc/icinga2/pki
     - name: "Check icinga2 version"
@@ -26,7 +26,7 @@
       raw: netstat -nlp | grep icinga | awk -F "0.0.0.0:" '{ print $2 }' | tr -d ' ' | tr -d '\r\n'
       register: port
 - name: Configure Icinga 2 Client Machine
-  hosts: "{{ lookup('env','ICINGA_GROUP') }}"
+  hosts: "{{ lookup('env','ICINGA_HOSTS') }}"
   strategy: free
   become: yes
   pre_tasks:
