@@ -1,29 +1,37 @@
 ---
-- name: "Debian - Determing os version"
+- name: "Ubuntu - Determing os version"
   set_fact:
     os_ver: trusty
   when: ansible_distribution_version == '14.04'
-- name: "Debian - Determing os version"
+- name: "Ubuntu - Determing os version"
   set_fact:
     os_ver: xenial
   when: ansible_distribution_version == '16.04'
-- name: "Debian - Get icinga repo key"
+- name: "Ubuntu - Get icinga repo key"
   shell: wget -O - https://packages.icinga.com/icinga.key | apt-key add - 
-- name: "Debian - Install icinga repo"
+- name: "Ubuntu - Install icinga repo"
   shell: echo 'deb https://packages.icinga.com/ubuntu icinga-{{ os_ver }} main' >/etc/apt/sources.list.d/icinga.list
-- name: "Debian - Update repo cache"
+- name: "Ubuntu - Update repo cache"
   apt:
     update_cache: yes
-- name: "Debian - Installing icinga2"
+- name: "Ubuntu - Installing icinga2"
   apt_install_ver: 
     package: icinga2
     version: "{{ hostvars[groups[master_group][0]]['icinga_ver'].stdout }}.{{ os_ver }}"
-- name: "Debian - Install pip"
+  when: "not lookup('env','USE_SIMPLE_ICINGA_INSTALLER') == 'YES'"
+  
+- name: "Ubuntu - Installing icinga2 - Simple Installer"
+  apt: 
+    name: icinga2
+    state: present
+  when: "lookup('env','USE_SIMPLE_ICINGA_INSTALLER') == 'YES'"
+  
+- name: "Ubuntu - Install pip"
   apt:
     name: python-pip
     state: latest
-- name: "Debian - Upgrading pip"
+- name: "Ubuntu - Upgrading pip"
   command: "pip install --upgrade pip"
-- name: "Debian - Install pexpect"
+- name: "Ubuntu - Install pexpect"
   pip:
     name: pexpect
