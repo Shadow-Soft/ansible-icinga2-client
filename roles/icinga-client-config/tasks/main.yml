@@ -9,28 +9,54 @@
 - name: "RHEL/Centos client preperation"
   include: install-rhel-client.yml
   when: ansible_os_family == "RedHat"
-- name: Getting file permissions
+- name: Getting file permissions - {{ cert_folder }}
   stat:
     path: "{{ cert_folder | regex_replace('[^/]*$','') }}"
   register: perm
-- name: Creates cert directory
+- name: Creates cert directory - {{ cert_folder }}
   file: 
     path: "{{ cert_folder }}"
     state: directory
     owner: "{{ perm.stat.pw_name }}"
     group: "{{ perm.stat.gr_name }}"
     mode: 0700
+  when: "perm.stat.pw_name is defined and perm.stat.gr_name is defined"
+  become: true
+
+- name: Creates cert directory - {{ cert_folder }} - Using Environment Variables
+  file: 
+    path: "{{ cert_folder }}"
+    state: directory
+    owner: "{{ lookup('env','ICINGA_USER')  }}"
+    group: "{{ lookup('env','ICINGA_GROUP') }}"
+    mode: 0700
+  when: "not perm.stat.pw_name is defined or not perm.stat.gr_name is defined"
+  become: true
+  
 - name: "Installing master certificate"
   copy: 
     content: "{{ master_cert_content }}" 
     dest: "{{ cert_folder }}/{{ master_fqdn }}.crt"
     force: yes
+    
 - name: Setting master cert permissions
   file: 
     path: "{{ cert_folder }}/{{ master_fqdn }}.crt"
     owner: "{{ perm.stat.pw_name }}"
     group: "{{ perm.stat.gr_name }}"
     mode: 0644
+  when: "perm.stat.pw_name is defined and perm.stat.gr_name is defined"
+  
+- name: Setting master cert permissions - Using Environment Variables
+  file: 
+    path: "{{ cert_folder }}/{{ master_fqdn }}.crt"
+    owner: "{{ lookup('env','ICINGA_USER')  }}"
+    group: "{{ lookup('env','ICINGA_GROUP') }}"
+    mode: 0644
+  become: true
+  when: "not perm.stat.pw_name is defined or not perm.stat.gr_name is defined"
+  
+    
 - name: Setting icinga node setup parameters
   shell: >
       icinga2 node setup

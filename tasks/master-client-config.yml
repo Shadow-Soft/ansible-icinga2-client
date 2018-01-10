@@ -6,6 +6,6 @@
 - name: "Generate token for {{ hostvars[item][fqdn_attr] }} client"
   command: icinga2 pki ticket --cn {{ hostvars[item][fqdn_attr] }}
   register: temp
-- name: "Make the token accessible to clients as var ip_{{ item.replace('.','_') }}"
+- name: "Make the token accessible to clients as var ip_{{ item.replace('.','_').replace('-','_') }}"
   set_fact:
-    "ip_{{ item.replace('.','_') }}": "{{ temp.stdout }}"
+    "ip_{{ item.replace('.','_').replace('-','_') }}": "{{ temp.stdout }}"
