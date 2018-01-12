@@ -41,6 +41,15 @@
       --trustedcert {{ cert_folder }}/{{ master_fqdn }}.crt
       --cn {{ fqdn }}
       --accept-command
+- name: Commenting out conf.d
+  lineinfile:
+    dest: /etc/icinga2/icinga2.conf
+    regexp: '(?i)^(include_recursive "conf.d".*)'
+    line: '# \1'
+    backrefs: yes
+    state: present
+- name: Disabling checker
+  command: icinga2 feature disable checker
 - name: Restarting icinga2 daemon
   service:
     name: icinga2
