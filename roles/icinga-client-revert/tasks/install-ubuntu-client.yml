@@ -1,0 +1,5 @@
+---
+- name: "Debian - Removing icinga2"
+  apt: 
+    name: icinga2
+    state: absent

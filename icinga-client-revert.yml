@@ -1,0 +1,39 @@
+---
+- name: Configure Icinga Master for Each New Client
+  hosts: icinga_master
+  become: yes
+  gather_facts: no
+  vars:
+    fqdn_attr: "fqdn"
+  tasks:
+    - name: "Generate host config for {{ hostvars[item][fqdn_attr] }} client"
+      file: 
+        dest: /etc/icinga2/hosts.d/{{ hostvars[item][fqdn_attr] }}.conf
+        state: absent  
+      with_items: "{{ groups.new_icinga_clients }}" 
+- name: Configure Icinga 2 Client Machine
+  hosts: new_icinga_clients
+  strategy: free
+  become: yes
+  pre_tasks:
+    - include_vars: vars/test-vars.yml
+    - set_fact:
+        cert_folder: "{{ hostvars[groups[master_group][0]]['folder'] }}"
+    - name: "Checking if previously run"
+      stat:
+         path: "{{ cert_folder }}/{{ master_fqdn }}"
+      register: cert
+    - debug: 
+         msg: "Icinga not previously configured for this client"
+      when: cert.stat.exists == false
+  roles:
+    - { role: icinga-client-revert, when: "cert.stat.exists == true" }
+- name: Reload Icinga On Master
+  hosts: icinga_master
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Reload icinga daemon
+      service:
+        name: icinga2
+        state: reloaded
