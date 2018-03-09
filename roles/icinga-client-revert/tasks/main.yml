@@ -12,8 +12,8 @@
     path: "{{ cert_folder }}/"
     state: absent
 - name: "Ubuntu/Debian client removal"
-  include: install-ubuntu-client.yml
+  include_tasks: install-ubuntu-client.yml
   when: ansible_os_family == "Debian"
 - name: "RHEL/Centos client removal"
-  include: install-rhel-client.yml
+  include_tasks: install-rhel-client.yml
   when: ansible_os_family == "RedHat"

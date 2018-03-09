@@ -6,7 +6,7 @@
   vars:
     fqdn_attr: "fqdn"
   tasks:
-    - include: tasks/master-client-config.yml
+    - include_tasks: tasks/master-client-config.yml
       with_items: "{{ groups.new_icinga_clients }}" 
     - set_fact:
         folder: /etc/icinga2/pki

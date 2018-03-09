@@ -11,6 +11,12 @@
         dest: /etc/icinga2/hosts.d/{{ hostvars[item][fqdn_attr] }}.conf
         state: absent  
       with_items: "{{ groups.new_icinga_clients }}" 
+    - name: "Copy sql cleanup" 
+      copy:
+        src: files/prepare-directory.sql
+        dest: /tmp/prepare-directory.sql
+    - shell: sed "s/{demo_client}/{{ hostvars[item][fqdn_attr] }}/g" prepare-director.sql | mysql -u root icinga
+      with_items: "{{ groups.new_icinga_clients }}"
 - name: Configure Icinga 2 Client Machine
   hosts: new_icinga_clients
   strategy: free

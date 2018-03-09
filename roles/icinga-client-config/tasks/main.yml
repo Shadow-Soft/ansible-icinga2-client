@@ -4,10 +4,10 @@
     msg: "Amazon linux is not currently support."
   when: ansible_distribution == "Amazon"
 - name: "Ubuntu/Debian client preperation"
-  include: install-ubuntu-client.yml
+  include_tasks: install-ubuntu-client.yml
   when: ansible_os_family == "Debian"
 - name: "RHEL/Centos client preperation"
-  include: install-rhel-client.yml
+  include_tasks: install-rhel-client.yml
   when: ansible_os_family == "RedHat"
 - name: Getting file permissions
   stat:
