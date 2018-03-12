@@ -9,11 +9,11 @@
 #   - A hostname/ip can be a member of multiple groups
 [icinga_master]
 #example.master.com ansible_user=ec2-user master_fqdn=example.master.com.internal
-13.90.205.75 ansible_user=normaluser fqdn=testmaster
+52.191.249.59 ansible_user=normaluser fqdn=testmaster
 
 [new_icinga_clients]
 #example.client.com ansible_user=ubuntu client_fqdn=example.client.com.internal
-52.168.54.235 ansible_user=normaluser fqdn=testcentos6
-52.168.67.78 ansible_user=normaluser fqdn=testcentos7
-13.90.205.26 ansible_user=normaluser fqdn=testubuntu14
-52.168.68.68 ansible_user=normaluser fqdn=testubuntu16
+52.224.8.254 ansible_user=normaluser fqdn=testcentos6
+52.224.14.26 ansible_user=normaluser fqdn=testcentos6b
+52.224.15.65 ansible_user=normaluser fqdn=testcentos7
+52.224.10.29 ansible_user=normaluser fqdn=testcentos7b

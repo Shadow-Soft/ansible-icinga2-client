@@ -29,11 +29,11 @@
   hosts: new_icinga_clients
   strategy: free
   become: yes
+  vars:
+    master_group: "icinga_master"
+    fqdn_attr: "fqdn"
   pre_tasks:
     - include_vars: vars/test-vars.yml
-    - set_fact:
-        master_group: "icinga_master"
-        fqdn_attr: "fqdn"
     - set_fact:
         cert_folder: "{{ hostvars[groups[master_group][0]]['folder'] }}"
         master_fqdn: "{{ hostvars[groups[master_group][0]][fqdn_attr] }}"
