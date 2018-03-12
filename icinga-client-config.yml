@@ -44,7 +44,7 @@
         ticket: "{{ hostvars[groups[master_group][0]][ticket_attrib] }}"
     - name: "Checking if previously run"
       stat:
-         path: "{{ cert_folder }}/{{ master_fqdn }}"
+         path: "{{ cert_folder }}/{{ master_fqdn }}.crt"
       register: cert
     - debug: 
          msg: "Icinga previously configured for this master"

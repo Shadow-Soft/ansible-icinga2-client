@@ -6,7 +6,7 @@
   vars:
     fqdn_attr: "fqdn"
   tasks:
-    - name: "Generate host config for {{ hostvars[item][fqdn_attr] }} client"
+    - name: "Remove host config for {{ hostvars[item][fqdn_attr] }}"
       file: 
         dest: /etc/icinga2/hosts.d/{{ hostvars[item][fqdn_attr] }}.conf
         state: absent  
@@ -15,19 +15,31 @@
       copy:
         src: files/prepare-directory.sql
         dest: /tmp/prepare-directory.sql
-    - shell: sed "s/{demo_client}/{{ hostvars[item][fqdn_attr] }}/g" prepare-director.sql | mysql -u root icinga
+    - shell: source /etc/icinga2/cloud/system_passwords;sed "s/{demo_client}/{{ hostvars[item][fqdn_attr] }}/g" /tmp/prepare-directory.sql | mysql -u root -p$ROOT_DB_PWD icinga
       with_items: "{{ groups.new_icinga_clients }}"
+    - set_fact:
+        folder: /etc/icinga2/pki
+    - name: "Check icinga2 version"
+      shell: yum list installed icinga2 | tail -n1 | awk {'print $2'} | awk -F ".el7." {' print $1'}
+      register: icinga_ver
+    - set_fact:
+        folder: /var/lib/icinga2/certs
+      when: icinga_ver.stdout | version_compare('2.8', '>=')
 - name: Configure Icinga 2 Client Machine
   hosts: new_icinga_clients
   strategy: free
   become: yes
+  vars:
+    master_group: "icinga_master"
+    fqdn_attr: "fqdn"
   pre_tasks:
     - include_vars: vars/test-vars.yml
     - set_fact:
         cert_folder: "{{ hostvars[groups[master_group][0]]['folder'] }}"
+        master_fqdn: "{{ hostvars[groups[master_group][0]][fqdn_attr] }}"
     - name: "Checking if previously run"
       stat:
-         path: "{{ cert_folder }}/{{ master_fqdn }}"
+         path: "{{ cert_folder }}/{{ master_fqdn }}.crt"
       register: cert
     - debug: 
          msg: "Icinga not previously configured for this client"

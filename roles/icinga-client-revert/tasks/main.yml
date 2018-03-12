@@ -3,17 +3,17 @@
   fail:
     msg: "Amazon linux is not currently support."
   when: ansible_distribution == "Amazon"
-- name: Restarting icinga2 daemon
+- name: Stopping icinga2 daemon
   service:
     name: icinga2
-    state: stop
+    state: stopped
 - name: Removes cert directory
   file: 
     path: "{{ cert_folder }}/"
     state: absent
 - name: "Ubuntu/Debian client removal"
-  include_tasks: install-ubuntu-client.yml
+  include_tasks: remove-ubuntu-client.yml
   when: ansible_os_family == "Debian"
 - name: "RHEL/Centos client removal"
-  include_tasks: install-rhel-client.yml
+  include_tasks: remove-rhel-client.yml
   when: ansible_os_family == "RedHat"

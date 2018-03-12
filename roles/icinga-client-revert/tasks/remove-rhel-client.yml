@@ -1,19 +1,19 @@
 ---
-- name: "RHEL/Centos - Get icinga repo for RHEL/Centos 7 if on RHEL 7"
+- name: "RHEL/Centos - Removing icinga repo for RHEL/Centos 7 if on RHEL 7"
   yum:
     name: https://packages.icinga.com/epel/icinga-rpm-release-7-latest.noarch.rpm
     state: absent
   when: ansible_distribution_version >= 7
-- name: "RHEL/Centos - Get icinga repo for RHEL/Centos 6 if on RHEL 6"
+- name: "RHEL/Centos - Removing icinga repo for RHEL/Centos 6 if on RHEL 6"
   yum:
     name: https://packages.icinga.com/epel/icinga-rpm-release-6-latest.noarch.rpm
     state: absent
   when: ansible_distribution_version >= 6 and ansible_distribution_version < 7
-- name: "RHEL/Centos - Install icinga"
+- name: "RHEL/Centos - Removing icinga"
   yum:
     name: "icinga2"
     state: absent
-- name: "RHEL/Centos - Install nagios-plugins-all"
+- name: "RHEL/Centos - Removing nagios-plugins-all"
   yum:
     name: "nagios-plugins-all"
     state: absent
